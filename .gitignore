@@ -5,3 +5,4 @@ stackexchange/data
 .clj-kondo/
 .cpcache/
 .lsp/
+.nrepl-port
