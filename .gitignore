@@ -1,0 +1,7 @@
+wordfreq/data
+stackexchange/data
+
+.calva/
+.clj-kondo/
+.cpcache/
+.lsp/
