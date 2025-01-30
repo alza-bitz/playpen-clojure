@@ -15,7 +15,9 @@
         org.scicloj/tempfiles {:mvn/version "1-beta1"}
         kixi/stats {:mvn/version "0.5.5"}
         hato/hato {:mvn/version "1.0.0"}
-        net.cgrand/xforms {:mvn/version "0.19.6"}}
+        net.cgrand/xforms {:mvn/version "0.19.6"}
+        org.clojure/data.xml {:mvn/version "0.0.8"}
+        clj-bom/clj-bom {:mvn/version "0.1.2"}}
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.3"}
                  slipset/deps-deploy {:mvn/version "0.2.2"}}
