@@ -1,5 +1,5 @@
-wordfreq/data
-stackexchange/data
+src/wordfreq/data
+src/stackexchange/data
 
 .calva/
 .clj-kondo/
