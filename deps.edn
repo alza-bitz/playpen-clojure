@@ -1,10 +1,19 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.11.3"}
-        scicloj/tablecloth {:mvn/version "7.029.2"}
-        hato/hato {:mvn/version "1.0.0"}
-        net.cgrand/xforms {:mvn/version "0.19.6"}
-        org.clojure/data.xml {:mvn/version "0.0.8"}
-        clj-bom/clj-bom {:mvn/version "0.1.2"}}
+       ;;  scicloj/tablecloth {:mvn/version "7.029.2"}
+       ;;  hato/hato {:mvn/version "1.0.0"}
+       ;;  net.cgrand/xforms {:mvn/version "0.19.6"}
+       ;;  org.clojure/data.xml {:mvn/version "0.0.8"}
+       ;;  clj-bom/clj-bom {:mvn/version "0.1.2"}
+       ;;  spark deps
+        zero.one/geni {:mvn/version "0.0.42"}
+        org.apache.spark/spark-core_2.12 {:mvn/version "3.5.4"}
+        org.apache.spark/spark-mllib_2.12 {:mvn/version "3.5.4"}
+      ;;   org.apache.spark/spark-sql_2.12 {:mvn/version "3.5.4"}
+        org.apache.spark/spark-connect-client-jvm_2.12 {:mvn/version "3.5.4"}
+        org.apache.arrow/arrow-memory-core {:mvn/version "18.1.0"} 
+        org.apache.arrow/arrow-vector {:mvn/version "18.1.0"
+                                       :exclusions [com.fasterxml.jackson.core/jackson-databind]}}
  :aliases
  {:repl {:jvm-opts ["--add-opens=java.base/java.io=ALL-UNNAMED"
                     "--add-opens=java.base/java.nio=ALL-UNNAMED"
