@@ -9,12 +9,12 @@
 (with-open [in (:body (hc/get "http://www.gutenberg.org/files/100/100-0.txt"
                               {:as :stream
                                :http-client {:redirect-policy :always}}))
-            out (io/output-stream "wordfreq/data/shakespeare.txt")]
+            out (io/output-stream "data/wordfreq/shakespeare.txt")]
   (io/copy in out))
 
 ;; 2. What are the top 10 words?
 
-(def lines (-> (tc/dataset "wordfreq/data/shakespeare.txt"
+(def lines (-> (tc/dataset "data/wordfreq/shakespeare.txt"
                            {:header-row? false
                             :separator "\n"
                             :key-fn (fn [_] (identity "line"))})

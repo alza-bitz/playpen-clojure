@@ -7,7 +7,7 @@
 ;; 2. What are the top 10 words?
 
 (def lines-sample
-  (with-open [reader (io/reader "wordfreq/data/shakespeare.txt")]
+  (with-open [reader (io/reader "data/wordfreq/shakespeare.txt")]
     (->> (line-seq reader)
          (take 100)
          doall)))
@@ -20,7 +20,7 @@
 
 ;; with lazy seq transformations
 (with-open
- [reader (io/reader "wordfreq/data/shakespeare.txt")]
+ [reader (io/reader "data/wordfreq/shakespeare.txt")]
   (->> (line-seq reader)
        (remove #(= % ""))
        (mapcat #(str/split % #"\s+"))
@@ -30,7 +30,7 @@
 
 ;; with eduction
 (with-open
- [reader (io/reader "wordfreq/data/shakespeare.txt")]
+ [reader (io/reader "data/wordfreq/shakespeare.txt")]
   (->> (line-seq reader)
        (eduction
         (mapcat #(str/split % #"\s+"))
@@ -40,7 +40,7 @@
        (take 10)))
 
 ;; with transduce
-(with-open [reader (io/reader "wordfreq/data/shakespeare.txt")]
+(with-open [reader (io/reader "data/wordfreq/shakespeare.txt")]
   (transduce (comp (mapcat #(str/split % #"\s+"))
                    (remove #(= % "")))
              (completing #(assoc %1 %2 (inc (get %1 %2 0)))
@@ -54,4 +54,4 @@
            (completing #(assoc %1 %2 (inc (get %1 %2 0)))
                        (comp (partial take 10) (partial sort-by second >)))
            {}
-           (xio/lines-in "wordfreq/data/shakespeare.txt"))
+           (xio/lines-in "data/wordfreq/shakespeare.txt"))
