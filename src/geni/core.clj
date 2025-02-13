@@ -5,5 +5,7 @@
   ([arg] 
    (do-something-with-session @gd/session arg))
   ([session arg] 
-   (dorun (map println [session arg]))))
+   (if (string? session)
+     (println session)
+     (dorun (map println [session arg])))))
 

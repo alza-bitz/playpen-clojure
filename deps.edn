@@ -5,6 +5,7 @@
        ;;  net.cgrand/xforms {:mvn/version "0.19.6"}
        ;;  org.clojure/data.xml {:mvn/version "0.0.8"}
        ;;  clj-bom/clj-bom {:mvn/version "0.1.2"}
+       org.clojure/tools.namespace {:mvn/version "1.5.0"}
        ;;  spark deps
         zero.one/geni {:mvn/version "0.0.42"}
         org.apache.spark/spark-core_2.12 {:mvn/version "3.5.4"}

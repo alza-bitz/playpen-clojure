@@ -38,7 +38,7 @@
 (comment
   (g/do-something-with-session {:spark-session "custom!"} "hello"))
 
-;; clean up before starting over
+;; step 3. clean up before starting over
 
 (comment
   (reset! geni.default/session "please load the default ns if you want to use the default session."))
