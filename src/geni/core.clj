@@ -19,9 +19,10 @@
 ;; but you can't do anything without a spark session anyway!
 ;; Even if you need a custom spark session, this will just mutate the (already loaded)
 ;; singleton which would probably have a negligible additional setup time cost.
-(def default-session
+(defn session
+  [& opts]
   ;; this would call SparkSession.builder.getOrCreate()
-  {:spark-session "default!"})
+  {:spark-session (or opts {:some-option "default"})})
 
 ;; Further note, since the spark session is a singleton underneath,
 ;; even having a 2-arity for the "do-something-with-session" functions
@@ -31,9 +32,7 @@
 ;; by removing the 2-arity form.
 (defn do-something-with-session
   ([arg] 
-   (do-something-with-session default-session arg))
+   (do-something-with-session (session) arg))
   ([session arg] 
-   (if (string? session)
-     (println session)
-     (dorun (map println [session arg])))))
+   (dorun (map println [session arg]))))
 
