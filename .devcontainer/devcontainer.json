@@ -15,6 +15,11 @@
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
 			"packages": "bash-completion"
+		},
+		"ghcr.io/devcontainers-extra/features/spark-sdkman:2": {
+			"version": "3.5.3",
+			"jdkVersion": "17",
+			"jdkDistro": "tem"
 		}
 	},
 	"customizations": {
@@ -27,6 +32,5 @@
 	"mounts": [
     	"source=\\\\wsl.localhost\\Debian,target=/mnt/wsl,type=bind,consistency=cached",
 		"source=C:\\,target=/mnt/c,type=bind,consistency=cached"
-	],
-	"postCreateCommand": "./.devcontainer/post_create_command.sh"
+	]
 }
