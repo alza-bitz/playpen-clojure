@@ -1,13 +1,13 @@
 ARG BASE_IMAGE=temurin-21-tools-deps-jammy
 FROM clojure:${BASE_IMAGE}
 
-ARG USERNAME=vscode
+ENV USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
     
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
     #
     # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
     && apt-get update \
