@@ -23,9 +23,5 @@
 				"betterthantomorrow.calva"
 			]
 		}
-	},
-	"mounts": [
-    	"source=\\\\wsl.localhost\\Debian,target=/mnt/wsl,type=bind,consistency=cached",
-		"source=C:\\,target=/mnt/c,type=bind,consistency=cached"
-	]
+	}
 }
