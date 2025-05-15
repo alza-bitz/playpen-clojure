@@ -1,12 +1,14 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.11.3"}
-        scicloj/tablecloth {:mvn/version "7.029.2"}
+ :deps {org.clojure/clojure {:mvn/version "1.12.0"}
         hato/hato {:mvn/version "1.0.0"}
         net.cgrand/xforms {:mvn/version "0.19.6"}
         org.clojure/data.xml {:mvn/version "0.0.8"}
-        clj-bom/clj-bom {:mvn/version "0.1.2"}}
+        clj-bom/clj-bom {:mvn/version "0.1.2"}
+        org.scicloj/noj {:mvn/version "2-beta18"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.3"}}
  :aliases
- {:repl {:jvm-opts ["--add-opens=java.base/java.io=ALL-UNNAMED"
+ {:dev {:extra-paths ["dev"]}
+  :repl {:jvm-opts ["--add-opens=java.base/java.io=ALL-UNNAMED"
                     "--add-opens=java.base/java.nio=ALL-UNNAMED"
                     "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
                     "--add-opens=java.base/java.util=ALL-UNNAMED"

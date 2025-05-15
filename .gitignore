@@ -5,3 +5,5 @@
 .cpcache/
 .lsp/
 .nrepl-port
+
+docs/
