@@ -105,8 +105,8 @@ sample-ds
 ;; Secondly, check the fit numerically.
 ;; A good fit is expected because the data is sampled directly from a logistic distribution.
 (fd/fit :mle :logistic (fd/->seq distribution 1000))
-;; I don't understand the fitness stats: what are `mle`, `aic`, `bic`?
-;; I couldn't find any references in the docs to explain the meaning of these keywords.
+;; I couldn't find any references in the api docs for the stats `:mle` `:aic` and `:bic`.
+;; Although, `:mle` is documented as the method "log likelihood".
 
 ;; Repeat but with added noise.
 ;; A comparatively worse fit is expected because of the added noise. 
@@ -118,7 +118,10 @@ sample-ds
 ;; Repeat again with even more added noise. 
 (fd/fit :mle :logistic (map (partial add-noise 10) (fd/->seq distribution 1000)))
 
-;; The fitness stats are different with added noise, but I don't know how to interpret this.
+;; The fitness stats are changing with added noise, 
+;; in particular the "log likelihood" is decreasing but I don't know how to interpret this.
+
+;; At this point I suppose I need to go back to school and increase my knowledge of stats! https://en.wikipedia.org/wiki/Logistic_regression
 
 ;; ## 4. Training and testing for ML
 
