@@ -1,24 +1,23 @@
 (ns stats.logistic
   (:require
+   [clojure.math :as math]
    [fastmath.ml.regression :as reg]
    [fitdistr.core :as fd]
+   [fitdistr.distributions :as fdd]
    [scicloj.ml.tribuo]
    [scicloj.tableplot.v1.plotly :as plotly]
    [tablecloth.api :as tc]
    [tablecloth.column.api :as tcc]))
 
-;; The purpose of this notebook is to understand logistic distributions and logistic regression 
-;; including goodness-of-fit, to gain confidence in the choice of features for subsequent ml training and testing. 
+;; The purpose of this notebook is to understand the [logistic function](https://en.wikipedia.org/wiki/Logistic_function), 
+;; [logistic distributions](https://en.wikipedia.org/wiki/Logistic_distribution) and 
+;; [logistic regression](https://en.wikipedia.org/wiki/Logistic_regression)
+;; including fitting distributions to (sampled) data and measuring goodness-of-fit.
 
-;; A synthetic dataset randomly sampled from a logistic distribution is used, rather than real data,
-;; because the goal is to understand the theory and process rather than any specific application.
+;; Understanding these concepts is useful for gaining confidence in any choice of features for subsequent ml training and testing against a given dataset. 
 
-^:kindly/hide-code
-(comment
-  (-> fdd/distribution-data
-      methods
-      keys
-      sort))
+;; Instead of real data, a synthetic dataset randomly sampled from a logistic distribution is used. 
+;; The goal is to understand the theory and process, rather than any specific real-world application.
 
 ;; ## 1. Create the distribution and inspect it
 
@@ -41,93 +40,143 @@
 
 ;; ## 2. Create a dataset from the distribution and inspect it
 
+;; Create a dataset from a random sample
+(def sample-ds (-> {:x (fd/->seq distribution 100)}
+                   tc/dataset
+                   (tc/map-columns :y
+                                   [:x]
+                                   (partial fd/cdf distribution))))
+;; Note 1. This dataset is based on a random sample of values from the distribution, 
+;; adding a `y` column for the corresponding cdf probabilities.
+
+;; Plot it
+(plotly/layer-point sample-ds)
+
 ;; Define a function that can add noise to values,
 ;; with optional upper and lower bounds for the case where the values are probabilities
-(defn- add-noise [nmax v & {:keys [lb ub]}]
+(defn- add-noise [v nmax & {:keys [lb ub]}]
   (let [noise (- (rand (* 2 nmax)) nmax)]
     (cond->> (+ v noise)
       lb (max lb)
       ub (min ub))))
 
-;; Create the dataset
-(def sample-ds
-  (-> {:x (fd/->seq distribution 100)}
-      tc/dataset
-      (tc/map-columns :y
-                      [:x]
-                      (fn [x]
-                        (let [pr-x (fd/cdf distribution x)]
-                          (if (< (add-noise 0.3 pr-x {:lb 0.01 :ub 0.99}) 0.5) 0 1))))))
-;; Note 1. This dataset is based on a random sample of values from the distribution, 
-;; adding a column for the corresponding cdf probabilities.
-
-;; Note 2. Before assigning y as 0 or 1 based on the threshold (0.5),
-;; noise is added to the probabilities, otherwise we get the error 
-;; `invalid variance of mean` when calling `(reg/glm)`. This error occurs because 
-;; without any added noise, the sampled values from the distribution are "perfectly separated", as in:
+;; Add noise to the `y` values
+(def sample-ds-with-noise
+  (-> sample-ds
+      (tc/map-columns :y-noisy
+                      [:y]
+                      #(add-noise % 0.3 {:lb 0.01 :ub 0.99}))))
+;; Note 1. Noise is added to the probabilities because otherwise at step 5. we get 
+;; the error `invalid variance of mean` when training an ML model with `(reg/glm)`.
+;; This error occurs because without any added noise, the sampled values from
+;; the distribution are "perfectly separated", as in
 
 ;; All `x < 0` get `y = 0`
 
 ;; All `x ≥ 0` get `y = 1`
 
+;; Plot it to see the effect of the (bounded) noise
+(plotly/layer-point sample-ds-with-noise {:=y :y-noisy})
+
+;; Bin the `y-noisy` values to `0` or `1` using `threshold=0.5`. 
+;; This is comparable to rounding with `HALF_UP`
+(def sample-ds-with-noise-binned
+  (-> sample-ds-with-noise
+      (tc/map-columns :y-noisy-binned
+                      [:y-noisy]
+                      #(if (< % 0.5) 0 1))))
+
 ;; Inspect the data
-sample-ds
+sample-ds-with-noise-binned
 
 ;; Get some basic stats for the data
-(-> sample-ds
+(-> sample-ds-with-noise-binned
     (tc/select-columns [:x])
     (tc/info))
 
 ;; Plot the data points only.
-(plotly/layer-point sample-ds)
+(plotly/layer-point sample-ds-with-noise-binned {:=y :y-noisy-binned})
 
-;; ## 3. Checking goodness of fit
+;; ## 3. Checking goodness of fit visually
 
-;; Firstly, check the fit visually.
 ;; Plot an estimate of the cumulative distribution function, including the line of best fit.
-(comment
-  (-> logistic-sample-ds
-      (plotly/layer-point)
-      (plotly/layer-smooth {:=model-options {:regression-model :logistic
-                                             :model-type :scicloj.ml.tribuo/regression}})))
-;; Note 1. The above code is commented out because I get a `ClassCastException` which prevents Clay from making the file.
-;; Full error details:
+(-> sample-ds-with-noise-binned
+    (plotly/layer-point {:=name "actual"
+                         :=y :y-noisy-binned})
+    (plotly/layer-smooth {:=name "predicted"
+                          :=model-options {:model-type :scicloj.ml.tribuo/regression
+                                           :tribuo-components [{:name "cart"
+                                                                :type "org.tribuo.regression.rtree.CARTRegressionTrainer"}]
+                                           :tribuo-trainer-name "cart"}}))
+;; Note 1. The api doc for `plotly/layer-smooth` states
 
-;;     Execution error (ClassCastException) at com.oracle.labs.mlrg.olcut.config.json.JsonLoader/parseJson (JsonLoader.java:161).
-;;     class com.fasterxml.jackson.databind.node.NullNode cannot be cast to class com.fasterxml.jackson.databind.node.ArrayNode (com.fasterxml.jackson.databind.node.NullNode and com.fasterxml.jackson.databind.node.ArrayNode are in unnamed module of loader 'app')
-
-;; Note 2. The api doc for `plotly/layer-smooth` states:
 ;; _"One can also provide the regression model details through `:=model-options`
 ;; and use any regression model and parameters registered by Metamorph.ml."_
-;; But how can I see what regression models are registered?
-;; Otherwise, how does one know what can/should be specified for either `:regression-model` or `:model-type`?
 
-;; Secondly, check the fit numerically.
-;; A good fit is expected because the data is sampled directly from a logistic distribution.
+;; For quite some time I didn't realise this statement was actually referring to the 
+;; [Tribuo reference](https://scicloj.github.io/noj/noj_book.tribuo_reference.html) and so
+;; instead I resorted to tweaking the [example I found in the Tableplot docs](https://scicloj.github.io/tableplot/tableplot_book.plotly_reference.html#layer-smooth) by trial and error.
+;; Under examples, see "Custom regression defined by :=model-options:"
+;; Linking these docs together would have saved me a lot of time in figuring out how to show the line of best fit..
+
+;; ## 4. Check goodness of fit numerically
+
+^:kindly/hide-code
+(comment
+  (-> fdd/distribution-data
+      methods
+      keys
+      sort))
+
+;; Firstly, a comparatively good fit is expected when fitting the data using the `:logistic` method, 
+;; because the data is sampled directly from a logistic distribution.
 (fd/fit :mle :logistic (fd/->seq distribution 1000))
-;; I couldn't find any references in the api docs for the stats `:mle` `:aic` and `:bic`.
-;; Although, `:mle` is documented as the method "log likelihood".
+;; Unfortunately the api for for `fd/fit` doesn't mention the structure of the returned map,
+;; but the Noj book [fitting distributions](https://scicloj.github.io/noj/noj_book.distribution_fitting.html#fitting-distributions) chapter states 
 
-;; Repeat but with added noise.
-;; A comparatively worse fit is expected because of the added noise. 
-(fd/fit :mle :logistic (map (partial add-noise 0.2) (fd/->seq distribution 1000)))
+;; _"The fitted distribution contains goodness-of-fit statistics, the estimated parameter values, and the distribution name."_
 
-;; Repeat again with even more added noise. 
-(fd/fit :mle :logistic (map (partial add-noise 1) (fd/->seq distribution 1000)))
+;; Based on that, I deduce the meaning of the map keys as
 
-;; Repeat again with even more added noise. 
-(fd/fit :mle :logistic (map (partial add-noise 10) (fd/->seq distribution 1000)))
+;; `stats` - goodness-of-fit statistics
 
-;; The fitness stats are changing with added noise, 
-;; in particular the "log likelihood" is decreasing but I don't know how to interpret this.
+;; `params` - the estimated parameter values for the distribution function
 
-;; At this point I suppose I need to go back to school and increase my knowledge of stats! https://en.wikipedia.org/wiki/Logistic_regression
+;; `distribution-name` - the distribution name
 
-;; ## 4. Training and testing for ML
+;; Unfortunately, I couldn't find any references in the api docs or Noj book for 
+;; the "goodness-of-fit statistics" `:mle` `:aic` and `:bic`. 
+;; Although `:mle` is documented as the input method "log likelihood".
+
+;; Secondly, a comparatively worse fit is expected when fitting the data using a method that
+;; doesn't match the data, such as `:normal`
+(fd/fit :mle :normal (fd/->seq distribution 1000))
+;; Note 1. When trying to fit the logistic data to a normal distribution, we get a comparatively 
+;; worse fit than before (the value of `:mle` is lower, but only slightly).
+
+;; Thirdly, when trying to fit with a completely non-matching distribution,
+;; an error is returned instead of computing a value
+(comment 
+  (fd/fit :mle :binomial (fd/->seq distribution 1000)))
+;;     Assert failed: Data values do not fit required distribution
+
+;; Side quest: experiment to see if the regression works with inverted values
+(-> sample-ds-with-noise-binned
+    (tc/map-columns :y-noisy-binned-inv [:y-noisy-binned] #(if (= 0 %) 1 0))
+    (plotly/layer-point {:=name "actual"
+                         :=y :y-noisy-binned-inv})
+    (plotly/layer-smooth {:=name "predicted"
+                          :=model-options {:model-type :scicloj.ml.tribuo/regression
+                                           :tribuo-components [{:name "cart"
+                                                                :type "org.tribuo.regression.rtree.CARTRegressionTrainer"}]
+                                           :tribuo-trainer-name "cart"}}))
+;; Hmm ok, it doesn't seem to be clever enough to flip the regression.
+
+;; ## 5. Training and testing for ML (using fastmath.ml)
 
 ;; Split into train and test sets
 (def sample-split
-  (-> sample-ds
+  (-> sample-ds-with-noise-binned
       (tc/split :holdout
                 {:split-names [:train :test]})
       (tc/group-by :$split-name {:result-type :as-map})))
@@ -135,7 +184,7 @@ sample-ds
 ;; Create a logistic model using the training data.
 (def model
   (reg/glm
-   (-> sample-split :train :y)
+   (-> sample-split :train :y-noisy-binned)
    (-> sample-split :train (tc/select-columns :x) (tc/rows))
    {:family :binomial
     :tol 0.5}))
@@ -147,10 +196,10 @@ sample-ds
 ;; where each row is itself a vector containing values only for the predictor columns
 
 ;; Note 2. Regarding the api doc for `reg/glm` options, there is no description for `:family`. 
-;; It wasn't obvious to me at all that it is asking about 
-;; the distribution of y (the target) rather than the distribution of x (the predictor)
+;; It wasn't obvious to me at all that it is asking about the distribution of `y` (the target) 
+;; rather than the distribution of `x` (the predictor).
 
-;; Now the model can be used to compute responses based on input values
+;; Now the model can be used to make predictions for the value of `y` based on values of `x`
 (model [0.0])
 (model [5.0])
 (model [-5.0])
@@ -160,6 +209,7 @@ sample-ds
   (.setScale (bigdec (model [5])) 2 java.math.RoundingMode/FLOOR))
 
 ;; Inspect and compare dataset `y` values with model prediction `y` values
+;; by calculating the "model prediction was correct" rates, in both cases `y=0` and `y=1`
 (-> sample-split
     :test
     (tc/add-column :y-model-pred
@@ -171,37 +221,18 @@ sample-ds
                    (fn [ds] (-> ds
                                 :y-model-pred
                                 tcc/round)))
-    (tc/order-by :y))
-
-;; Extend to find the "model prediction was correct" rates, in both cases `y=0` and `y=1`
-(-> sample-split
-    :test
-    (tc/add-column :y-model-pred
-                   (fn [ds] (-> ds
-                                (tc/select-columns [:x])
-                                (tc/rows :as-vecs)
-                                (#(map model %)))))
-    (tc/add-column :y-model-pred-rounded
-                   (fn [ds] (-> ds
-                                :y-model-pred
-                                tcc/round)))
+    (tc/order-by :y-noisy)
     (tc/group-by [:y-model-pred-rounded])
     (tc/aggregate {:model-pred-correct-rate-y-1 (fn [ds]
-                                                  (/ (tc/row-count (tc/select-rows ds (comp #(= 1 %) :y))) (tc/row-count ds)))
+                                                  (/ (tc/row-count (tc/select-rows ds (comp #(= 1 %) :y-noisy-binned))) (tc/row-count ds)))
                    :model-pred-correct-rate-y-0 (fn [ds]
-                                                  (/ (tc/row-count (tc/select-rows ds (comp #(= 0 %) :y))) (tc/row-count ds)))})
+                                                  (/ (tc/row-count (tc/select-rows ds (comp #(= 0 %) :y-noisy-binned))) (tc/row-count ds)))})
     (tc/order-by :y-model-pred-rounded))
+;; Note 1. The `:model-pred-correct-rate-y-0` value is only valid for `:y-model-pred-rounded` = `0`
 
+;; Note 2. The `:model-pred-correct-rate-y-1` value is only valid for `:y-model-pred-rounded` = `1`
 
-;; ## 5. Some additional details regarding the error `Invalid variance of mean`.
+;; ## 6. Training and testing for ML (using metamorph.ml and Tribuo)
 
-;;     Execution error (ExceptionInfo) at fastmath.ml.regression/glm$fn (regression.clj:1006).
-;;     Invalid variance of mean.
-
-;; Note: when I look in `regression.clj:1006` the exception is thrown using `ex-info` with `{:mean g :variance v :coeff idx}` but this is not being printed!
-;; However, if I eval `*e` at the repl, the exception data is printed, for example: `{:mean 1.0, :variance 0.0, :coeff 49}`
-
-;; But I don't understand where mean of `1.0` and variance of `0.0` are coming from?
-
-;; It should be noted that a plain Google search for "fastmath invalid variance of mean" produces no useful results.
+;; TODO
 
