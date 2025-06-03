@@ -167,7 +167,7 @@ split
 (def lreg-model (ml/train (:train split)
                           {:model-type :scicloj.ml.tribuo/classification
                            :tribuo-components [{:name "logistic"
-                                                :type "org.tribuo.classification.sgd.linear.LinearSGDTrainer"}]
+                                                :type "org.tribuo.classification.sgd.linear.LogisticRegressionTrainer"}]
                            :tribuo-trainer-name "logistic"}))
 
 (def lreg-prediction
@@ -190,9 +190,7 @@ split
                         {:model-type :scicloj.ml.tribuo/classification
                          :tribuo-components [{:name "random-forest"
                                               :type "org.tribuo.classification.dtree.CARTClassificationTrainer"
-                                              :properties {:maxDepth "8"
-                                                           :useRandomSplitPoints "false"
-                                                           :fractionFeaturesInSplit "0.5"}}]
+                                              :properties {:maxDepth "8"}}]
                          :tribuo-trainer-name "random-forest"}))
 
 (def rf-prediction
@@ -215,7 +213,7 @@ split
                          {:model-type :scicloj.ml.tribuo/classification
                           :tribuo-components [{:name "xgboost"
                                                :type "org.tribuo.classification.xgboost.XGBoostClassificationTrainer"
-                                               :properties {:numTrees "16"}}]
+                                               :properties {:numTrees "64"}}]
                           :tribuo-trainer-name "xgboost"}))
 
 (def xgb-prediction
@@ -227,7 +225,7 @@ split
  (:test_result (ds-cat/reverse-map-categorical-xforms (:test split)))
  (:test_result (ds-cat/reverse-map-categorical-xforms xgb-prediction)))
 
-;; 65%.. again a bit better but still not great
+;; 66%.. again a bit better but still not great
 
 ;; Unfortunately this returns nil :(
 (ml/explain xgb-model)

@@ -98,7 +98,7 @@
 
 (require '[scicloj.ml.tribuo])
 
-;; Try some regression
+;; Plot a fitted line by adding a smooth layer
 (-> test-results-cleansed-balanced
     (tc/select-columns [:test_mileage :test_result])
     (tc/drop-rows #(not (< (:Q1 test-mileage-stats) (:test_mileage %) (:Q3 test-mileage-stats))))
@@ -112,8 +112,7 @@
                                            :tribuo-components [{:name "cart"
                                                                 :type "org.tribuo.regression.rtree.CARTRegressionTrainer"}]
                                            :tribuo-trainer-name "cart"}}))
-
-;; It doesn't look like a logistic distribution at all!
+;; It doesn't seem to fit a logistic distribution at all!
 
 ;; ### Make
 
