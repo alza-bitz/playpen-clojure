@@ -97,7 +97,7 @@ sample-ds-with-noise-binned
 ;; Plot the data points only.
 (plotly/layer-point sample-ds-with-noise-binned {:=y :y-noisy-binned})
 
-;; ## 3. Checking goodness of fit visually
+;; ## 3. Checking goodness of fit visually (using tribuo)
 
 ;; Plot an estimate of the cumulative distribution function, including the line of best fit.
 (-> sample-ds-with-noise-binned
@@ -119,7 +119,7 @@ sample-ds-with-noise-binned
 ;; Under examples, see "Custom regression defined by :=model-options:"
 ;; Linking these docs together would have saved me a lot of time in figuring out how to show the line of best fit..
 
-;; ## 4. Check goodness of fit numerically
+;; ## 4. Check goodness of fit numerically (using fastmath)
 
 ^:kindly/hide-code
 (comment
@@ -187,6 +187,7 @@ sample-ds-with-noise-binned
    (-> sample-split :train :y-noisy-binned)
    (-> sample-split :train (tc/select-columns :x) (tc/rows))
    {:family :binomial
+    :names ["x"]
     :tol 0.5}))
 ;; Note 1. Regarding the api doc for `reg/glm` `ys` and `xss` args.
 
@@ -198,6 +199,20 @@ sample-ds-with-noise-binned
 ;; Note 2. Regarding the api doc for `reg/glm` options, there is no description for `:family`. 
 ;; It wasn't obvious to me at all that it is asking about the distribution of `y` (the target) 
 ;; rather than the distribution of `x` (the predictor).
+
+(type model)
+
+;; Printing the model gives a tabular summary. 
+;; Capture the output and display it using Kindly for cleaner formatting.
+(comment
+  (kind/code
+   (with-out-str
+     (println
+      model))))
+;; Note 1. The above code is commented because it fails:
+
+;;      Execution error (NullPointerException) at fastmath.ml.regression/coefficients-table (regression.clj:1289).
+;;      Cannot invoke "java.lang.Number.doubleValue()" because "x" is null
 
 ;; Now the model can be used to make predictions for the value of `y` based on values of `x`
 (model [0.0])
