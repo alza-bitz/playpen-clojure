@@ -1,0 +1,31 @@
+name: push
+
+on:
+  push:
+    branches:
+      - "main"
+      - "noj-mot-test"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: delaguardo/setup-clojure@12.1
+      - run: clojure -M:clay -r src/mot_test/analysis.clj src/mot_test/learn.clj
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
