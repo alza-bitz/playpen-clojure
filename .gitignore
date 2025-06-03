@@ -1,5 +1,3 @@
-/data
-
 .calva/
 .clj-kondo/
 .cpcache/
@@ -7,3 +5,4 @@
 .nrepl-port
 
 docs/
+.actsecrets
