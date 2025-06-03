@@ -10,7 +10,7 @@
 
 ;; # 2. ML Modelling
 
-;; ## Initial thoughts, following analysis
+;; ## Initial thoughts after analysis
 
 ;; Target variable: `test_result`
 
@@ -83,7 +83,7 @@
 (-> test-results-filtered-balanced
     (tc/group-by [:test_result])
     (tc/aggregate tc/row-count))
-;; Ok, classes are now balanced
+;; Classes are now balanced
 
 ;; ## Convert categorical features to numeric
 
@@ -95,20 +95,12 @@
 
 (def target-column :test_result)
 
-(map
- #(hash-map
-   :column-name %
-   :column-values (distinct (get test-results-filtered-balanced %)))
- categorical-feature-columns)
-
 (def categorical-results
   (-> test-results-filtered-balanced
       (tc/select-columns (conj feature-columns target-column))
       (tc/drop-missing)
       (ds/categorical->number [:test_result] ["F" "P"] :int32)
       (ds-mod/set-inference-target target-column)))
-
-(map meta (vals categorical-results))
 
 (def cat-maps [(ds-cat/fit-categorical-map categorical-results :make top-20-makes :int32)
                (ds-cat/fit-categorical-map categorical-results :model top-300-models :int32)
@@ -129,8 +121,6 @@ cat-maps
 (ds/rowvecs
  (tc/head
   numeric-results))
-
-(map meta (vals numeric-results))
 
 ;; Split data into test and train data sets
 
@@ -167,7 +157,8 @@ split
 (def lreg-model (ml/train (:train split)
                           {:model-type :scicloj.ml.tribuo/classification
                            :tribuo-components [{:name "logistic"
-                                                :type "org.tribuo.classification.sgd.linear.LogisticRegressionTrainer"}]
+                                                :type "org.tribuo.classification.sgd.linear.LogisticRegressionTrainer"
+                                                :properties {:loggingInterval "1000000"}}]
                            :tribuo-trainer-name "logistic"}))
 
 (def lreg-prediction
