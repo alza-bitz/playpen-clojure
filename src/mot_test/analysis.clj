@@ -38,9 +38,13 @@
 ;; ### Test result
 
 ;; What are the test result values?
-(-> test-results-cleansed
-    (tc/group-by [:test_result])
-    (tc/aggregate tc/row-count))
+(let [total-count (tc/row-count test-results-cleansed)]
+  (-> test-results-cleansed
+      (tc/group-by [:test_result])
+      (tc/aggregate {:count tc/row-count})
+      (tc/map-columns :pc [:count] #(* 100 (/ % total-count)))))
+;; Setting expectations.. The model needs to have at least 75% accuracy to be 
+;; better than just guessing "P" every time
 
 ;; Undersample the majority class
 (def test-results-cleansed-balanced
