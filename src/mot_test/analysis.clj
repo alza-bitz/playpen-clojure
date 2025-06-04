@@ -121,13 +121,17 @@
     (tc/unique-by :make)
     tc/row-count)
 
+;; What about empty make?
+(-> test-results-cleansed-balanced
+    (tc/group-by (comp nil? #(re-matches #"\s*" %) :make)))
+
 ;; Find clean make values - most popular makes
 (-> test-results-cleansed-balanced
     (tc/group-by :make)
     (tc/aggregate {:make-count tc/row-count})
     (tc/order-by :make-count :desc)
-    (tc/map-columns :pc :make-count #(* 100 (/ % (-> test-results-cleansed-balanced tc/row-count))))
-    (tc/add-column :pc-cumsum #(-> % :pc tcc/cumsum))
+    (tc/map-columns :pc :make-count #(* 100 (/ % (tc/row-count test-results-cleansed-balanced))))
+    (tc/add-column :pc-cumsum (comp tcc/cumsum :pc))
     (tc/head 20))
 ;; Notes.
 ;; 1. Top 10 makes covers 65% of the data.
@@ -172,7 +176,7 @@
     (tc/aggregate {:model-count tc/row-count})
     (tc/order-by :model-count :desc)
     (tc/map-columns :pc :model-count #(* 100 (/ % (tc/row-count test-results-cleansed-balanced))))
-    (tc/add-column :pc-cumsum #(-> % :pc tcc/cumsum))
+    (tc/add-column :pc-cumsum (comp tcc/cumsum :pc))
     (tc/head 300))
 ;; Notes.
 ;; 1. Top 300 makes covers 90% of the data.
