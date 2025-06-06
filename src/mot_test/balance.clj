@@ -25,5 +25,5 @@
       (-> over-group
           (tc/head under-count)
           (tc/concat under-group)
-          (tc/random (* 8 under-count))
+          (tc/random (* 10 under-count))
           (tc/unique-by)))))

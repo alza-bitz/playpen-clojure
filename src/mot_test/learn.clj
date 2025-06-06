@@ -15,16 +15,16 @@
 ;; Target variable: `test_result`
 
 ;; Candidate features:
-;; 1. `make` top 20
-;; 2. `model` top 300
-;; 3. `test_mileage` log 10
-;; 4. `first-use-datediff` log 10 of `test_date` - `first_use_date` (days)
-;; 5. `postcode_area`
+;; 1. `make` top 20 (categorical, nominal)
+;; 2. `model` top 300 (categorical, nominal)
+;; 3. `test_mileage` log 10 (non-categorical)
+;; 4. `first-use-datediff` log 10 of `test_date` - `first_use_date` (days) (non-categorical)
+;; 5. `postcode_area` (categorical, nominal)
 
 ;; ## Prepare for train/test
 
 (def top-20-makes
-  (-> analysis/test-results-cleansed
+  (-> analysis/test-results-cleansed-balanced-2
       (tc/group-by [:make])
       (tc/aggregate {:make-count tc/row-count})
       (tc/order-by :make-count :desc)
@@ -33,7 +33,7 @@
       vec))
 
 (def top-300-models
-  (-> analysis/test-results-cleansed
+  (-> analysis/test-results-cleansed-balanced-2
       (tc/group-by [:make :model])
       (tc/aggregate {:model-count tc/row-count})
       (tc/order-by :model-count :desc)
@@ -42,14 +42,14 @@
       vec))
 
 (def postcode-areas
-  (-> analysis/test-results-cleansed
+  (-> analysis/test-results-cleansed-balanced-2
       (tc/select-columns :postcode_area)
       (tc/unique-by :postcode_area)
       (tc/order-by :postcode_area)
       :postcode_area
       vec))
 
-(def test-results-filtered (-> analysis/test-results-cleansed
+(def test-results-filtered (-> analysis/test-results-cleansed-balanced-2
                                (tc/select-rows (comp #(contains? (set top-20-makes) %) :make))
                                (tc/select-rows (comp #(contains? (set top-300-models) %) :model))
                                (tc/add-column :test-mileage-log10 (comp tcc/log10 :test_mileage))
@@ -62,28 +62,7 @@
                                (tc/add-column :first-use-datediff-log10 (comp tcc/log10 :first-use-datediff))))
 
 ;; Check for class imbalance
-(-> test-results-filtered
-    (tc/group-by [:test_result])
-    (tc/aggregate tc/row-count))
-
-;; Undersample the majority class
-(def test-results-filtered-balanced
-  (let [groups (-> test-results-filtered
-                   (tc/group-by [:test_result])
-                   (tc/groups->map))
-        passes (get groups {:test_result "P"})
-        fails (get groups {:test_result "F"})
-        fails-count (tc/row-count fails)]
-    (-> passes
-        (tc/head fails-count)
-        (tc/concat fails)
-        (tc/random (* 8 fails-count))
-        (tc/unique-by :test_id))))
-
-(-> test-results-filtered-balanced
-    (tc/group-by [:test_result])
-    (tc/aggregate tc/row-count))
-;; Classes are now balanced
+(analysis/check-balance test-results-filtered)
 
 ;; ## Convert categorical features to numeric
 
@@ -96,7 +75,7 @@
 (def target-column :test_result)
 
 (def categorical-results
-  (-> test-results-filtered-balanced
+  (-> test-results-filtered
       (tc/select-columns (conj feature-columns target-column))
       (tc/drop-missing)
       (ds/categorical->number [:test_result] ["F" "P"] :int32)
@@ -128,7 +107,7 @@ cat-maps
                (tc/split->seq :holdout)
                first))
 
-split
+(map analysis/check-balance (vals split))
 
 ;; ## Train/test using dummy model
 
