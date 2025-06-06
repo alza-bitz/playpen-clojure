@@ -88,6 +88,7 @@
     [header
      (vals-in-keys-order row header-keys)]))
 
+;; Write monthly partitions
 (comment
   (with-open [reader (io/reader "data/test_result.csv")]
     (let [lines (line-seq reader)
@@ -98,14 +99,13 @@
         (map #(str/split % delim-re))
         (map (partial ->row header-keys))
         (filter pred-test-class-id-4)
-        (filter pred-test-type-normal)
-        (filter pred-test-result-pass-fail)
         (map #(into {:partition (partition-monthly %)
                      :line (str/join delim (vals-in-keys-order % header-keys))})))
        ;;  conj 
        (partition-writer header)
        (rest lines)))))
 
+;; Write a sample filtered on first day of month
 (comment
   (with-open [reader (io/reader "data/test_result.csv")
               writer (io/writer "data/test_result_sample.csv")]
@@ -117,8 +117,6 @@
         (map #(str/split % delim-re))
         (map (partial ->row header-keys))
         (filter pred-test-class-id-4)
-        (filter pred-test-type-normal)
-        (filter pred-test-result-pass-fail)
         (filter pred-first-day-of-month)
         (map #(str/join delim (vals-in-keys-order % header-keys))))
        xio/lines-out
