@@ -1,16 +1,13 @@
 (ns tablecloth
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [hato.client :as hc]
-            [tablecloth.api :as tc]))
+  (:require
+   [clojure.string :as str]
+   [core :refer [download!]]
+   [tablecloth.api :as tc]))
 
 ;; 1. Download the dataset http://www.gutenberg.org/files/100/100-0.txt
 
-(with-open [in (:body (hc/get "http://www.gutenberg.org/files/100/100-0.txt"
-                              {:as :stream
-                               :http-client {:redirect-policy :always}}))
-            out (io/output-stream "data/wordfreq/shakespeare.txt")]
-  (io/copy in out))
+(download! "http://www.gutenberg.org/files/100/100-0.txt"
+           "data/wordfreq/shakespeare.txt")
 
 ;; 2. What are the top 10 words?
 
