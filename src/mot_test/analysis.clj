@@ -16,7 +16,7 @@
                                    :key-fn keyword
                                    :column-blocklist ["test_class_id"]}))
 ;; Notes.
-;; 1. See `processing.clj` for rules used to extract `test_result_sample.csv` from `test_result.csv`
+;; 1. See [processing.clj](https://github.com/alza-bitz/playpen-clojure/blob/noj-mot-test/src/mot_test/processing.clj) for rules used to extract `test_result_sample.csv` from `test_result.csv`
 ;; 2. Raw data in `test_result.csv` downloaded from https://www.data.gov.uk/dataset/e3939ef8-30c7-4ca8-9c7c-ad9475cc9b2f/anonymised_mot_test
 ;; 3. Specifically, https://data.dft.gov.uk/anonymised-mot-test/test_data/dft_test_result_2023.zip
 
