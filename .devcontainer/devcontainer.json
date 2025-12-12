@@ -13,7 +13,7 @@
 	"containerUser": "${localEnv:USER}",
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
-		"ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
+		"ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
 			"packages": "bash-completion,libxrender1,libxtst6,libxi6" // libx* required to load tech.v3.libs.buffered-image
 		}
 	},
